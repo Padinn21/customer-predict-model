@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import joblib
+import time
 
 model = joblib.load('model-kmeans.joblib')
 columns = ['total_amount', 'total_transaction']
@@ -35,32 +36,34 @@ def show_cluster_page():
 
     if total_amount:
       spent_status = pay_stat(total_amount)
-      st.text_input('Spent Status', value=spent_status)
+      st.code(language='markdown', body=f'Spent Status: {spent_status}')
 
     total_transaction = st.number_input("Input Total Transaction", min_value=1)
 
     if total_transaction:
       order_status = order_stat(total_transaction)
-      st.text_input("Order Status", value=order_status)
+      st.code(language='markdown', body=f'Order Status: {order_status}')
 
 
     data = pd.DataFrame([[total_amount, total_transaction]], columns=columns)
     
-
-   
-
     def predict():
         prediction = model.predict(data)
-        result_container = st.empty()
+        
         
         if prediction == 0:
-           result_container.success("Predicted Cluster: Bronze Member")
+           result_text = "Predicted Cluster: Bronze Member"
         elif prediction == 1: 
-             result_container.success("Predicted Cluster: Gold Member")
+             result_text = "Predicted Cluster: Gold Member"
         elif prediction == 2:
-            result_container.success("Predicted Cluster: Platinum Member")
+            result_text = "Predicted Cluster: Platinum Member"
+
+        result_container.info(result_text)
+        time.sleep(3)
+        result_container.empty()
 
     st.button("Predict", on_click=predict)
+    result_container = st.empty()
 
 
 

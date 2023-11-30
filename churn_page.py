@@ -4,6 +4,7 @@ import streamlit as st
 import joblib
 import datetime
 from sklearn.preprocessing import LabelEncoder
+import time
 
 
 model = joblib.load('model-xgboost.joblib')
@@ -40,6 +41,12 @@ def order_stat(x):
     return 'Mid Order'
   else:
     return 'Low Order'
+
+def promo_stat(x):
+  if x == 0:
+    return 'No'
+  else:
+    return 'Yes'
   
 def encode_features(data):
     encoding_dict = {}
@@ -53,10 +60,10 @@ def encode_features(data):
 
 def show_churn_page() :
     st.title('Customer Churn Prediction')
-    st.write("""### Input Customer Data Below""")
+    st.subheader('Input Customer Data Below')
 
-    customer_id = st.text_input("Input Customer ID", '123456')
-    full_name = st.text_input("Input Customer Fullname", 'Max Verstappen')
+    customer_id = st.text_input("Customer ID", '123456')
+    full_name = st.text_input("Customer Fullname", 'Max Verstappen')
     customer_gender = st.selectbox("Customer Gender", ['Male', 'Female'])
 
     min_date = datetime.date(1900, 1, 1)
@@ -65,7 +72,7 @@ def show_churn_page() :
     age = st.number_input("Customer Age", min_value=1, max_value=100)
     if age:
        age_cat = age_category(age)
-       st.text_input("Age Category", value=age_cat)
+       st.code(language='markdown', body=f'Age Category: {age_cat}')
 
     device_type  = st.selectbox("Device Type", ['Android', 'Ios'])
 
@@ -86,22 +93,26 @@ def show_churn_page() :
 
     total_year_join = st.number_input('Total Year Using App', min_value=1, max_value=100)
 
+    using_promo = None
     promo_amount = st.number_input("Input Promo Amount", min_value=0)
+
 
     total_amount = st.number_input("Input Total Amount", min_value=1000)
 
     if total_amount:
       spent_status = pay_stat(total_amount)
-      st.text_input('Spent Status', value=spent_status)
+      st.code(language='markdown', body=f'Spent Status: {spent_status}')
 
     total_transaction = st.number_input("Input Total Transaction", min_value=1)
 
     if total_transaction:
       order_status = order_stat(total_transaction)
-      st.text_input("Order Status", value=order_status)
-    
-    using_promo = st.selectbox("Using Promo ?", ['Yes', 'No'])
+      st.code(language='markdown', body=f'Order Status: {order_status}')
 
+    if promo_amount:
+      using_promo = promo_stat(promo_amount)
+      st.code(language='markdown', body=f'Customer Using Promo? : {using_promo}')
+    
     season = ('Summer', 'Fall', 'Spring', 'Winter', 'other')
 
     prefered_season_product = st.selectbox("Prefered Season Product", season)
@@ -130,14 +141,20 @@ def show_churn_page() :
       x = pd.DataFrame([list(encoding_dict.values())], columns=columns)
 
       prediction = model.predict(x.values)
-      result_container = st.empty()
+      
 
       if prediction == 1:
-        result_container.error("Customer is Possibly Churn")
+        result_text = "Customer is Possibly Churn"
+        result_container.error(result_text, icon="📈")
       else: 
-        result_container.success("Customer is Possibly Not Churn")
+        result_text = "Customer is Possibly Not Churn"
+        result_container.success(result_text, icon="📉")
+
+      time.sleep(3)
+      result_container.empty()  
 
     st.button("Predict", on_click=predict)  
+    result_container = st.empty()
   
       
 
